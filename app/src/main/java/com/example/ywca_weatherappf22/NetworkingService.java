@@ -1,5 +1,7 @@
 package com.example.ywca_weatherappf22;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -17,9 +19,10 @@ public class NetworkingService {
 
     interface NetworkingListener{
         void gettingJsonIsCompleted(String json);
+        void gettingImageIsCompleted(Bitmap image);
     }
-
-    String weatherAPIKey = "071c3ffca10be01d334505630d2c1a9c";
+    String iconURL1 = "http://openweathermap.org/img/wn/";
+    String iconURL2 = "@2x.png";
     NetworkingListener listener;
     Handler handler = new Handler(Looper.getMainLooper());
 
@@ -43,13 +46,13 @@ public class NetworkingService {
         MyApp.executorService.execute(new Runnable() {
             @Override
             public void run() {
+                HttpURLConnection urlConnection = null;
                 try {
                     int value = 0;
                     URL url = new URL(urlString);
-                    HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection = (HttpURLConnection) url.openConnection();
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     StringBuffer buffer = new StringBuffer();
-
                     while((value = in.read()) != -1){
                         buffer.append((char)value);
                     }
@@ -60,14 +63,14 @@ public class NetworkingService {
                             listener.gettingJsonIsCompleted(buffer.toString());
                         }
                     });
-
-
-
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
 
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+                finally {
+                    urlConnection.disconnect();
                 }
 
             }
@@ -77,4 +80,36 @@ public class NetworkingService {
     }
 
 
-}
+
+
+
+    void gettingImage(String icon) {
+        MyApp.executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    int value = 0;
+                    URL url = new URL(iconURL1 + icon + iconURL2);
+                    //HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                    InputStream in = url.openStream();//new BufferedInputStream(urlConnection.getInputStream());
+                    Bitmap imageData = BitmapFactory.decodeStream(in);
+
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            listener.gettingImageIsCompleted(imageData);
+                        }
+                    });
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        });
+    }
+
+    }

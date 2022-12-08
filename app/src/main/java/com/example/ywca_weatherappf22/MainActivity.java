@@ -1,11 +1,14 @@
 package com.example.ywca_weatherappf22;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,7 +18,9 @@ import android.view.MenuItem;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
-implements NetworkingService.NetworkingListener , CitiesAdapter.ItemListener{
+implements NetworkingService.NetworkingListener , CitiesAdapter.ItemListener,
+    DBManager.DataBaseListener
+{
 
     RecyclerView cityList;
     CitiesAdapter adapter;
@@ -27,7 +32,10 @@ implements NetworkingService.NetworkingListener , CitiesAdapter.ItemListener{
         ((MyApp) getApplication()).networkingService.listener = this;
         cityList = findViewById(R.id.cities_list);
         adapter = new CitiesAdapter(this,list);
+        this.setTitle("Search For Cities....");
         adapter.listener = this;
+        ((MyApp)getApplication()).dbManager.listener = this;
+        ((MyApp)getApplication()).dbManager.getDB(this);
         cityList.setAdapter(adapter);
         cityList.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -79,9 +87,37 @@ implements NetworkingService.NetworkingListener , CitiesAdapter.ItemListener{
     }
 
     @Override
+    public void gettingImageIsCompleted(Bitmap image) {
+
+    }
+
+    @Override
     public void onClicked(int post) {
-        Intent i = new Intent(this,WeatherActivity.class);
-        i.putExtra("city", list.get(post));
-        startActivity(i);
+        // show and alert
+        // save the city
+        showAlert(list.get(post));
+    }
+
+    void showAlert(City city){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Are you sure you want to save "+ city.city+" to the DB??");
+        builder.setNegativeButton("No",null);
+        builder.setPositiveButton("Yes",new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                ((MyApp)getApplication()).dbManager.insertNewCityAsync(city);
+            }
+        });
+        builder.create().show();
+
+    }
+
+    @Override
+    public void insertingCityCompleted() {
+        finish();
+    }
+
+    @Override
+    public void gettingCitiesCompleted(City[] list) {
+
     }
 }

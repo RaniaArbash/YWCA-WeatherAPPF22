@@ -33,13 +33,13 @@ public class JsonService {
             JSONArray weatherArray = jsonObject.getJSONArray("weather");
             wo.description =  weatherArray.getJSONObject(0).getString("description");
             wo.icon =  weatherArray.getJSONObject(0).getString("icon");
-
+            wo.temp = jsonObject.getJSONObject("main").getDouble("temp");
+            wo.humidity =  jsonObject.getJSONObject("main").getInt("humidity");
+            wo.wind_speed =  jsonObject.getJSONObject("wind").getDouble("speed");
 
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-
         // Your task for today
         return wo;
     }
